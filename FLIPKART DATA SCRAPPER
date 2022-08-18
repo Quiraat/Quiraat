@@ -1,0 +1,95 @@
+######FLIP KART DATA SCRAPER FOR MULTIPLE PAGES####
+
+####installing librarirs####
+from bs4 import BeautifulSoup
+import pandas as pd
+import csv
+import requests
+
+title = []
+price = []
+rating = []
+discount = []
+description = []
+product_url_list = []
+
+####extracting pages####
+pages = list(range(1,50))
+for page in pages:
+    req = requests.get("https://www.flipkart.com/audio-video/headphones/pr?sid=0pm%2Cfcn&otracker=categorytree&p%5B%5D=facets.connectivity%255B%255D%3DBluetooth&fm=neo%2Fmerchandising&iid=M_b775f305-ca1b-416e-8579-ff73364b5ff4_1_372UD5BXDFYS_MC.R08R6GB1Q1BI&otracker=hp_rich_navigation_2_1.navigationCard.RICH_NAVIGATION_Electronics%7EAudio%7EBluetooth%2BHeadphones_R08R6GB1Q1BI&otracker1=hp_rich_navigation_PINNED_neo%2Fmerchandising_NA_NAV_EXPANDABLE_navigationCard_cc_2_L2_view-all&cid=R08R6GB1Q1BI&page={}".format(page)).text
+    soup = BeautifulSoup(req, "html.parser")
+    #print(soup.prettify())
+
+   # Scraping url of each product
+    Links = soup.find_all("a", {'class':"s1Q9rs"})
+    for i in range(len(Links)):
+        hreflink = Links[i].get('href')
+        producturl = 'https://www.flipkart.com' + str(hreflink)
+        product_url_list += [producturl]
+
+
+
+#SCRAPPER FOR DETAILS OF EACH PRODUCT
+titles = []
+prices = []
+ratings = []
+discounts = []
+details = []
+
+for i in product_url_list:
+    p = requests.get(str(i))
+    soup = BeautifulSoup(p.content, "html.parser")
+        #print(soup.prettify())
+    
+    if soup.find('span', {'class':"B_NuCI" }):
+        t= soup.find('span', {'class':"B_NuCI" }).text
+        titles.append(t)
+    else:
+        t = "Null"
+        titles.append("Null")
+        
+    if soup.find("div",{'class':"_30jeq3 _16Jk6d"}):
+        b = soup.find("div",{'class':"_30jeq3 _16Jk6d"}).text
+        prices.append(b)
+    else:
+        b = "Null"
+        prices.append("Null")
+        
+    if soup.find("div", {'class':'_3Ay6Sb _31Dcoz'}):
+        a = soup.find("div", {'class':'_3Ay6Sb _31Dcoz'}).text
+        discounts.append(a)
+    else:
+        a = "Null"
+        discounts.append(a)
+        
+    if soup.find("div", {'class':'_3LWZlK'}):
+        r = soup.find("div", {'class':'_3LWZlK'}).text
+        ratings.append(r)
+    else:
+        r = "Null"
+        ratings.append(r)
+    
+    if soup.find('div', {'class': "_1UhVsV _3AsE0T"}):
+        g = soup.find('div', {'class': "_1UhVsV _3AsE0T"}).text
+        details.append(g)
+    else:
+        g = "Null"
+        details.append(g)
+
+####Printing lengths#### 
+print(len(prices))
+print(len(titles))
+print(len(discounts))
+print(len(ratings))
+print(len(details))
+print(len(product_url_list))
+    
+####Converting to DATA FRAME####
+df = {'Title': titles[1:1000],'Price': prices[1:1000], 'Rating':ratings[1:1000], 'Discount': discounts[1:1000], "Detail": details[1:1000], "Url": product_url_list[1:1000]}
+dataset = pd.DataFrame(data = df)
+dataset
+
+####transfering to csv file####
+dataset.to_csv("FlipKartData.csv")
+    
+
